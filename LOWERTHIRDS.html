@@ -3,75 +3,72 @@
 <head>
 <meta charset="UTF-8">
 <title>HTML Lower Third – BrightSign</title>
-
 <style>
-  /* ===== GLOBAL ===== */
-  html, body {
-    width: 1920px;
-    height: 1080px;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    background: #00FF00; /* ATEM chroma key */
-    font-family: "gill-sans-nova-condensed", sans-serif;
-  }
+/* ===== GLOBAL ===== */
+html, body {
+  width: 1920px;
+  height: 1080px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #00FF00; /* ATEM chroma key */
+  font-family: "gill-sans-nova-condensed", sans-serif;
+}
 
-  /* ===== SAFE FRAME CONTAINER (borrowed logic) ===== */
-  .event-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    box-sizing: border-box;
-  }
+/* ===== SAFE FRAME CONTAINER (borrowed logic) ===== */
+.event-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
 
-  /* ===== LOWER THIRD BLOCK ===== */
-  #lowerthird {
-    position: absolute;
-    left: 5.2%;
-    bottom: 9.3%;
-    background: rgba(17, 17, 17, 0.85);
-    padding: clamp(0.75rem, 2vw, 2rem) clamp(1.5rem, 3vw, 3.5rem);
-    box-sizing: border-box;
-    max-width: 72.9%;
-    opacity: 0;
-    transform: translateY(40px);
-    transition: opacity 0.35s ease, transform 0.35s ease;
-  }
+/* ===== LOWER THIRD BLOCK ===== */
+#lowerthird {
+  position: absolute;
+  left: 5.2%;
+  bottom: 9.3%;
+  background: rgba(17, 17, 17, 0.85);
+  padding: clamp(0.75rem, 2vw, 2rem) clamp(1.5rem, 3vw, 3.5rem);
+  box-sizing: border-box;
+  max-width: 72.9%;
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
 
-  #lowerthird.show {
-    opacity: 1;
-    transform: translateY(0);
-  }
+#lowerthird.show {
+  opacity: 1;
+  transform: translateY(0);
+}
 
-  /* ===== TEXT STYLES (derived from event styles) ===== */
-  .name {
-    font-size: clamp(2rem, 4.5vw, 4.5rem);
-    font-weight: bold;
-    line-height: 1;
-    color: #ccc;
-    word-break: keep-all;
-    overflow-wrap: break-word;
-  }
+/* ===== TEXT STYLES (derived from event styles) ===== */
+.name {
+  font-size: clamp(2rem, 4.5vw, 4.5rem);
+  font-weight: bold;
+  line-height: 1;
+  color: #ccc;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
 
-  .title {
-    margin-top: 0.4em;
-    font-size: clamp(1rem, 2.8vw, 2.8rem);
-    font-weight: 100;
-    line-height: 1.1;
-    opacity: 0.9;
-    color: #ccc;
-  }
+.title {
+  margin-top: 0.4em;
+  font-size: clamp(1rem, 2.8vw, 2.8rem);
+  font-weight: 100;
+  line-height: 1.1;
+  opacity: 0.9;
+  color: #ccc;
+}
 
-  /* ===== UTILITY ===== */
-  .no-break {
-    white-space: nowrap;
-    word-break: keep-all;
-  }
+/* ===== UTILITY ===== */
+.no-break {
+  white-space: nowrap;
+  word-break: keep-all;
+}
 </style>
 </head>
-
 <body>
-
 <div class="event-container">
   <div id="lowerthird">
     <div class="name" id="name"></div>
@@ -80,62 +77,76 @@
 </div>
 
 <script>
-  /* ===== DATA ===== */
-  const entries = [
-    { name: "Alex Chen", title: "Panelist" },
-    { name: "Maria Lopez", title: "Moderator" },
-    { name: "Samir Haddad", title: "Guest Speaker" }
-  ];
+/* ===== DATA ===== */
+let entries = [];
+let index = -1;
 
-  let index = -1;
+const lt = document.getElementById("lowerthird");
+const nameEl = document.getElementById("name");
+const titleEl = document.getElementById("title");
 
-  const lt = document.getElementById("lowerthird");
-  const nameEl = document.getElementById("name");
-  const titleEl = document.getElementById("title");
-
-  /* ===== DISPLAY LOGIC ===== */
-  function showEntry(i) {
-    if (!entries.length) return;
-
-    index = (i + entries.length) % entries.length;
-    nameEl.textContent = entries[index].name;
-    titleEl.textContent = entries[index].title || "";
-    lt.classList.add("show");
+/* ===== LOAD JSON ===== */
+async function loadNames() {
+  try {
+    const response = await fetch('https://cu4thspace.github.io/LOWERTHIRDS/NAMES.json');
+    const data = await response.json();
+    entries = data;
+    console.log('Loaded entries:', entries);
+  } catch (error) {
+    console.error('Error loading names:', error);
+    // Fallback to hardcoded data if JSON fails to load
+    entries = [
+      { name: "Alex Chen", title: "Panelist" },
+      { name: "Maria Lopez", title: "Moderator" },
+      { name: "Samir Haddad", title: "Guest Speaker" }
+    ];
   }
+}
 
-  function nextEntry() {
-    showEntry(index + 1);
+/* ===== DISPLAY LOGIC ===== */
+function showEntry(i) {
+  if (!entries.length) return;
+  index = (i + entries.length) % entries.length;
+  nameEl.textContent = entries[index].name;
+  titleEl.textContent = entries[index].title || "";
+  lt.classList.add("show");
+}
+
+function nextEntry() {
+  showEntry(index + 1);
+}
+
+function prevEntry() {
+  showEntry(index - 1);
+}
+
+function hideEntry() {
+  lt.classList.remove("show");
+}
+
+/* ===== KEYBOARD CONTROL =====
+   RA = Next
+   LA = Previous
+   DOWN = Clear
+*/
+document.addEventListener("keydown", function(e) {
+  switch (e.key) {
+    case "ArrowRight":
+      nextEntry();
+      break;
+    case "ArrowLeft":
+      prevEntry();
+      break;
+    case "ArrowDown":
+      hideEntry();
+      break;
   }
+});
 
-  function prevEntry() {
-    showEntry(index - 1);
-  }
-
-  function hideEntry() {
-    lt.classList.remove("show");
-  }
-
-  /* ===== KEYBOARD CONTROL =====
-     RA = Next
-     LA = Previous
-     DOWN = Clear
-  */
-  document.addEventListener("keydown", function(e) {
-    switch (e.key) {
-      case "ArrowRight":
-        nextEntry();
-        break;
-      case "ArrowLeft":
-        prevEntry();
-        break;
-      case "ArrowDown":
-        hideEntry();
-        break;
-    }
-  });
-
+/* ===== INITIALIZE ===== */
+loadNames().then(() => {
   hideEntry();
+});
 </script>
-
 </body>
 </html>
