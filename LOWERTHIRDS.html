@@ -170,6 +170,7 @@ function hideEntry() {
    Right Arrow = Next
    Left Arrow = Previous
    Down Arrow = Clear
+   Shift + R = Refresh Page
 */
 document.addEventListener("keydown", function(e) {
   switch (e.key) {
@@ -181,6 +182,12 @@ document.addEventListener("keydown", function(e) {
       break;
     case "ArrowDown":
       hideEntry();
+      break;
+    case "R":
+    case "r":
+      if (e.shiftKey) {
+        location.reload();
+      }
       break;
   }
 });
