@@ -90,7 +90,8 @@ async function loadNames() {
   try {
     const response = await fetch('https://cu4thspace.github.io/LOWERTHIRDS/NAMES.json');
     const data = await response.json();
-    entries = data;
+    // Your JSON has an "entries" property, not a root array
+    entries = data.entries || [];
     console.log('Loaded entries:', entries);
   } catch (error) {
     console.error('Error loading names:', error);
