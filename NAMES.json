@@ -1,9 +1,17 @@
 {
-  "updated": "2026-02-06T19:15:00Z",
+  "updated": "2026-02-11T14:39:15.470Z",
   "entries": [
-    { "name": "Fred Anderson", "title": "" },
-    { "name": "Stefanie Duguay", "title": "Moderator" },
-    { "name": "Fenwick McKelvey", "title": "Associate Professor, Communication Studies" },
-    { "name": "Erin Hassard", "title": "Moderator" }
+    {
+      "name": "Fred Anderson",
+      "title": "Local hero"
+    },
+    {
+      "name": "Douglas Moffat",
+      "title": "Local guy"
+    },
+    {
+      "name": "Marc Lafrance",
+      "title": "Provost Task Force"
+    }
   ]
 }
