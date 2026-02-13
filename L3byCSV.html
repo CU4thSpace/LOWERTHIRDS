@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://use.typekit.net/paf7uxj.css">
+<title>HTML Lower Third – BrightSign (Google Sheets)</title>
+<style>
+/* ===== GLOBAL ===== */
+html, body {
+  width: 1920px;
+  height: 1080px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #00FF00; /* ATEM chroma key */
+  font-family: "gill-sans-nova-condensed", sans-serif;
+}
+
+/* ===== SAFE FRAME CONTAINER ===== */
+.event-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* ===== LOWER THIRD BLOCK ===== */
+#lowerthird {
+  position: absolute;
+  left: 5.2%;
+  bottom: 9.3%;
+  max-width: 72.9%;
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  z-index: 10;
+}
+
+#lowerthird.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ===== TEXT STYLES ===== */
+.name {
+  font-size: clamp(2rem, 7.5vw, 7.5rem);
+  font-weight: bold;
+  line-height: 1;
+  color: #ccc;
+  opacity: 1.0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  margin-bottom: 0.2em;
+}
+
+.title {
+  font-size: clamp(1rem, 3.2vw, 3.2rem);
+  font-weight: 100;
+  line-height: 1;
+  opacity: 0.9;
+  color: #ccc;
+}
+
+/* ===== UTILITY ===== */
+.no-break {
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+/* ===== DEBUG INDICATOR ===== */
+#debug {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0,0,0,0.8);
+  color: #0f0;
+  padding: 10px;
+  font-family: monospace;
+  font-size: 14px;
+  max-width: 400px;
+  z-index: 1000;
+}
+</style>
+</head>
+<body>
+<div id="debug">Loading...</div>
+<div class="event-container">
+  <div id="lowerthird">
+    <div class="name" id="name"></div>
+    <div class="title" id="title"></div>
+  </div>
+</div>
+
+<script>
+/* ===== CONFIG ===== */
+// Published Google Sheet CSV URL
+// To update: File > Share > Publish to web > CSV > copy the link
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTBAMH4McS3-OHHgVUVqk_pt6WOhe0Jpp5ON2PbzyvGpGlF8kRHyt6JZlIQ0eN99kLkbpxl4la0ceWc/pub?output=csv";
+
+/* ===== DATA ===== */
+let entries = [];
+let index = -1;
+
+const lt      = document.getElementById("lowerthird");
+const nameEl  = document.getElementById("name");
+const titleEl = document.getElementById("title");
+const debugEl = document.getElementById("debug");
+
+/* ===== DEBUG HELPER ===== */
+function debug(msg) {
+  console.log(msg);
+  debugEl.innerHTML += '<br>' + msg;
+}
+
+/* ===== CSV PARSER =====
+   Handles quoted fields, embedded commas, and CRLF line endings.
+   Returns an array of objects keyed by the first-row headers.
+*/
+function parseCSV(text) {
+  // Normalize line endings
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+
+  if (lines.length < 2) return [];
+
+  // Parse a single CSV line respecting quoted fields
+  function parseLine(line) {
+    const fields = [];
+    let field = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          // Escaped quote ""
+          field += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (ch === ',' && !inQuotes) {
+        fields.push(field.trim());
+        field = '';
+      } else {
+        field += ch;
+      }
+    }
+    fields.push(field.trim());
+    return fields;
+  }
+
+  const headers = parseLine(lines[0]).map(h => h.toLowerCase().trim());
+  const rows = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue; // skip empty rows
+
+    const values = parseLine(line);
+    const obj = {};
+    headers.forEach((h, idx) => {
+      obj[h] = values[idx] !== undefined ? values[idx] : '';
+    });
+    rows.push(obj);
+  }
+
+  return rows;
+}
+
+/* ===== LOAD FROM GOOGLE SHEETS ===== */
+async function loadNames() {
+  try {
+    debug('Fetching Google Sheet...');
+
+    const response = await fetch(SHEET_CSV_URL);
+    debug('Response status: ' + response.status);
+
+    if (!response.ok) {
+      throw new Error('HTTP error! status: ' + response.status);
+    }
+
+    const csvText = await response.text();
+    debug('CSV received (' + csvText.length + ' chars)');
+
+    const rows = parseCSV(csvText);
+    debug('Rows parsed: ' + rows.length);
+
+    if (rows.length === 0) {
+      throw new Error('No rows found in sheet');
+    }
+
+    // Log the column headers we detected
+    debug('Columns: ' + Object.keys(rows[0]).join(', '));
+
+    // Map rows → entries, looking for "name" and "title" columns
+    // (case-insensitive; falls back gracefully if "title" column is missing)
+    entries = rows
+      .map(row => ({
+        name:  row['name']  || row['names'] || '',
+        title: row['title'] || row['role']  || row['position'] || row['subtitle'] || ''
+      }))
+      .filter(e => e.name !== ''); // drop blank-name rows
+
+    debug('Entries ready: ' + entries.length);
+    if (entries[0]) debug('First: ' + JSON.stringify(entries[0]));
+
+    // Hide debug panel after 3 s on success
+    setTimeout(() => { debugEl.style.display = 'none'; }, 3000);
+
+  } catch (error) {
+    debug('ERROR: ' + error.message);
+    debug('Using fallback data');
+    console.error('Error loading sheet:', error);
+
+    entries = [
+      { name: "Sheet", title: "Didn't Load!" }
+    ];
+  }
+}
+
+/* ===== DISPLAY LOGIC ===== */
+function showEntry(i) {
+  if (!entries.length) {
+    debug('No entries available!');
+    return;
+  }
+  index = (i + entries.length) % entries.length;
+  nameEl.textContent = entries[index].name;
+  titleEl.textContent = entries[index].title || "";
+  lt.classList.add("show");
+}
+
+function nextEntry()  { showEntry(index + 1); }
+function prevEntry()  { showEntry(index - 1); }
+function hideEntry()  { lt.classList.remove("show"); }
+
+/* ===== KEYBOARD CONTROL =====
+   Right Arrow  → Next
+   Left Arrow   → Previous
+   Down Arrow   → Clear / Hide
+   Shift + R    → Refresh page (re-fetches sheet)
+*/
+document.addEventListener("keydown", function(e) {
+  switch (e.key) {
+    case "ArrowRight": nextEntry();          break;
+    case "ArrowLeft":  prevEntry();          break;
+    case "ArrowDown":  hideEntry();          break;
+    case "R":
+    case "r":
+      if (e.shiftKey) location.reload();
+      break;
+  }
+});
+
+/* ===== INITIALIZE ===== */
+loadNames().then(() => {
+  hideEntry();
+});
+</script>
+</body>
+</html>
