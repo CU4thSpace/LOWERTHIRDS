@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://use.typekit.net/paf7uxj.css">
-<title>HTML Lower Third – BrightSign (Google Sheets)</title>
+<title>HTML Lower Third – BrightSign</title>
 
 <style>
 /* ===== GLOBAL ===== */
@@ -29,13 +29,13 @@ html, body {
 #lowerthird {
   position: absolute;
   left: 5.2%;
-  bottom: 9.3%;
+  bottom: 200px; /* fixed broadcast position */
   max-width: 72.9%;
 
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 10px;
+  gap: 8px;
 
   opacity: 0;
   transform: translateY(40px);
@@ -52,25 +52,24 @@ html, body {
   display: inline-block;
   background-color: #2E3092;
   color: #ffffff;
-  padding: 12px 18px;
+  padding: 10px 16px;
   box-sizing: border-box;
+  line-height: 1;
 }
 
-/* NAME */
+/* ===== NAME (independent control) ===== */
 .name {
-  font-size: clamp(2rem, 7.5vw, 7.5rem);
+  font-size: 120px;   /* <-- adjust NAME size here */
   font-weight: bold;
-  line-height: 1;
 }
 
-/* TITLE */
+/* ===== TITLE ===== */
 .title {
-  font-size: clamp(1rem, 3.2vw, 3.2rem);
+  font-size: 52px;    /* <-- adjust TITLE size here */
   font-weight: 100;
-  line-height: 1;
 }
 
-/* DEBUG */
+/* ===== DEBUG ===== */
 #debug {
   position: absolute;
   top: 10px;
@@ -87,7 +86,7 @@ html, body {
 
 <body>
 
-<div id="debug">Loading...</div>
+<div id="debug">READY — Press → to advance</div>
 
 <div class="event-container">
   <div id="lowerthird">
@@ -104,6 +103,7 @@ const PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(CSV_URL);
 /* ===== STATE ===== */
 let entries = [];
 let index   = -1;
+let hasShownFirstEntry = false;
 
 const lt      = document.getElementById("lowerthird");
 const nameEl  = document.getElementById("name");
@@ -170,14 +170,14 @@ function rowsToEntries(rows) {
   const rawKeys = Object.keys(rows[0]);
 
   if (rawKeys.length < 2) {
-    debug('ERROR: Sheet must have 2 columns (NAME, TITLE)');
+    debug('ERROR: Need NAME + TITLE columns');
     return [];
   }
 
   const nameKey  = rawKeys[0];
   const titleKey = rawKeys[1];
 
-  debug('Using columns → NAME: ' + nameKey + ' | TITLE: ' + titleKey);
+  debug('Using NAME: ' + nameKey + ' | TITLE: ' + titleKey);
 
   return rows.map(r => ({
     name:  (r[nameKey] || '').trim(),
@@ -187,8 +187,7 @@ function rowsToEntries(rows) {
 }
 
 /* ===== FETCH ===== */
-async function fetchCSV(url, label) {
-  debug('Fetching ' + label);
+async function fetchCSV(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error('HTTP ' + r.status);
   return await r.text();
@@ -198,14 +197,14 @@ async function loadNames() {
   let csvText = null;
 
   try {
-    csvText = await fetchCSV(CSV_URL, 'direct');
+    csvText = await fetchCSV(CSV_URL);
   } catch(e) {
-    debug('Direct failed');
+    debug('Direct fetch failed');
   }
 
   if (!csvText) {
     try {
-      csvText = await fetchCSV(PROXY_URL, 'proxy');
+      csvText = await fetchCSV(PROXY_URL);
     } catch(e) {
       debug('Proxy failed');
     }
@@ -220,11 +219,7 @@ async function loadNames() {
   const rows = parseCSV(csvText);
   entries = rowsToEntries(rows);
 
-  debug('Entries loaded: ' + entries.length);
-
-  if (entries.length > 0) {
-    setTimeout(() => debugEl.style.display = 'none', 4000);
-  }
+  debug('Loaded ' + entries.length + ' entries');
 }
 
 /* ===== DISPLAY ===== */
@@ -237,6 +232,11 @@ function showEntry(i) {
   titleEl.textContent = entries[index].title;
 
   lt.classList.add("show");
+
+  if (!hasShownFirstEntry) {
+    debugEl.style.display = 'none';
+    hasShownFirstEntry = true;
+  }
 }
 
 function nextEntry() { showEntry(index + 1); }
