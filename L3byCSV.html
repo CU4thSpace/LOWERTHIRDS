@@ -243,12 +243,52 @@ function nextEntry() { showEntry(index + 1); }
 function prevEntry() { showEntry(index - 1); }
 function hideEntry() { lt.classList.remove("show"); }
 
-/* ===== KEYBOARD ===== */
-document.addEventListener("keydown", e => {
+/* ===== KEYBOARD INPUT =====
+ *
+ * PATH A — BrightSign XD1034 (e.keycode, non-standard lowercase property)
+ *   50 = numpad 2 → reload page
+ *   52 = numpad 4 → previous lower third
+ *   54 = numpad 6 → next lower third
+ *   56 = numpad 8 → navigate to Events page
+ *
+ * PATH B — Standard PC keyboard (e.key)
+ *   ArrowRight        → next lower third
+ *   ArrowLeft         → previous lower third
+ *   ArrowDown         → hide lower third
+ *   Shift+R           → reload page
+ */
+document.addEventListener("keydown", function(e) {
+  // PATH A: BrightSign numpad keycodes
+  switch (e.keycode) {
+    case 52:
+      e.preventDefault();
+      prevEntry();
+      return;
+    case 54:
+      e.preventDefault();
+      nextEntry();
+      return;
+    case 56:
+      e.preventDefault();
+      window.location.href = 'https://cu4thspace.github.io/EVENTS/TODAYKEYPADDER.html';
+      return;
+    case 50:
+      e.preventDefault();
+      location.reload();
+      return;
+  }
+
+  // PATH B: Standard PC keyboard
   switch (e.key) {
-    case "ArrowRight": nextEntry(); break;
-    case "ArrowLeft":  prevEntry(); break;
-    case "ArrowDown":  hideEntry(); break;
+    case "ArrowRight":
+      nextEntry();
+      break;
+    case "ArrowLeft":
+      prevEntry();
+      break;
+    case "ArrowDown":
+      hideEntry();
+      break;
     case "R": case "r":
       if (e.shiftKey) location.reload();
       break;
