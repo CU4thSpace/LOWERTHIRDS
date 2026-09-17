@@ -100,6 +100,9 @@ html, body {
 const CSV_URL   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTBAMH4McS3-OHHgVUVqk_pt6WOhe0Jpp5ON2PbzyvGpGlF8kRHyt6JZlIQ0eN99kLkbpxl4la0ceWc/pub?output=csv";
 const PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(CSV_URL);
 
+/* Where the clicker's "back" button (ArrowLeft) should send the browser */
+const CLICKER_BACK_URL = "https://cu4thspace.github.io/EVENTS/OBSCLOCKDATE";
+
 /* ===== STATE ===== */
 let entries = [];
 let index   = -1;
@@ -253,7 +256,7 @@ function hideEntry() { lt.classList.remove("show"); }
  *
  * PATH B — Standard PC keyboard (e.key)
  *   ArrowRight        → next lower third
- *   ArrowLeft         → previous lower third
+ *   ArrowLeft         → navigate to OBS clock/date page (clicker "back")
  *   ArrowDown         → hide lower third
  *   Shift+R           → reload page
  */
@@ -284,7 +287,8 @@ document.addEventListener("keydown", function(e) {
       nextEntry();
       break;
     case "ArrowLeft":
-      prevEntry();
+      e.preventDefault();
+      window.location.href = CLICKER_BACK_URL;
       break;
     case "ArrowDown":
       hideEntry();
