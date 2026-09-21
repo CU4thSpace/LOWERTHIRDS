@@ -1,0 +1,76 @@
+<style>
+/* ===== GLOBAL ===== */
+html, body {
+  width: 1920px;
+  height: 1080px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #00FF00;
+  font-family: "gill-sans-nova-condensed", sans-serif;
+}
+
+/* ===== CONTAINER ===== */
+.event-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* ===== LOWER THIRD ===== */
+#lowerthird {
+  position: absolute;
+  left: 5.2%;
+  bottom: 50px;   /* exact pixel position from base */
+  max-width: 72.9%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+#lowerthird.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ===== BOXED TEXT ===== */
+.name, .title {
+  display: inline-block;
+  background-color: #2E3092;
+  color: #ffffff;
+  padding: 10px 16px;
+  box-sizing: border-box;
+  line-height: 1;
+}
+
+/* ===== NAME (independent control) ===== */
+.name {
+  font-size: 50px;   /* <-- adjust NAME size here */
+  font-weight: bold;
+}
+
+/* ===== TITLE ===== */
+.title {
+  font-size: 30px;    /* <-- adjust TITLE size here */
+  font-weight: 100;
+}
+
+/* ===== DEBUG ===== */
+#debug {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0,0,0,0.8);
+  color: #0f0;
+  padding: 10px;
+  font-family: monospace;
+  font-size: 14px;
+  z-index: 1000;
+}
+</style>
