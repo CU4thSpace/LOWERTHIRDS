@@ -1,37 +1,49 @@
-<style>
-/* ===== GLOBAL ===== */
-html, body {
-  width: 1920px;
-  height: 1080px;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  background: #00FF00;
-  font-family: "gill-sans-nova-condensed", sans-serif;
+/* =========================================================
+   LOWERTHIRDStyle.css
+   Styles for the 4th Space BrightSign HTML lower thirds.
+   Hosted at: https://cu4thspace.github.io/LOWERTHIRDS/LOWERTHIRDStyle.css
+   ========================================================= */
+
+/* ===== EDITABLE SETTINGS ===== */
+:root {
+  --lt-left: 5.2%;            /* distance from left edge */
+  --lt-bottom: 50px;          /* exact pixel position from base */
+  --lt-max-width: 72.9%;
+  --lt-gap: 10px;             /* space between name and title boxes */
+
+  --lt-bg: #2E3092;           /* box colour */
+  --lt-text: #ffffff;
+  --lt-font: "gill-sans-nova-condensed", sans-serif;
+
+  --lt-name-size: 50px;       /* NAME size */
+  --lt-name-weight: bold;
+  --lt-title-size: 30px;      /* TITLE size */
+  --lt-title-weight: 100;
+
+  --lt-pad-y: 10px;
+  --lt-pad-x: 16px;
+
+  --lt-fade: 0.35s;           /* animation duration */
+  --lt-slide: 40px;           /* how far it slides up on entry */
 }
 
-/* ===== CONTAINER ===== */
-.event-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-/* ===== LOWER THIRD ===== */
+/* ===== LOWER THIRD CONTAINER ===== */
 #lowerthird {
   position: absolute;
-  left: 5.2%;
-  bottom: 50px;   /* exact pixel position from base */
-  max-width: 72.9%;
+  left: var(--lt-left);
+  bottom: var(--lt-bottom);
+  max-width: var(--lt-max-width);
 
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 10px;
+  gap: var(--lt-gap);
+
+  font-family: var(--lt-font);
 
   opacity: 0;
-  transform: translateY(40px);
-  transition: opacity 0.35s ease, transform 0.35s ease;
+  transform: translateY(var(--lt-slide));
+  transition: opacity var(--lt-fade) ease, transform var(--lt-fade) ease;
 }
 
 #lowerthird.show {
@@ -39,38 +51,25 @@ html, body {
   transform: translateY(0);
 }
 
-/* ===== BOXED TEXT ===== */
-.name, .title {
+/* ===== BOXED TEXT (shared) ===== */
+#lowerthird .name,
+#lowerthird .title {
   display: inline-block;
-  background-color: #2E3092;
-  color: #ffffff;
-  padding: 10px 16px;
+  background-color: var(--lt-bg);
+  color: var(--lt-text);
+  padding: var(--lt-pad-y) var(--lt-pad-x);
   box-sizing: border-box;
   line-height: 1;
 }
 
-/* ===== NAME (independent control) ===== */
-.name {
-  font-size: 50px;   /* <-- adjust NAME size here */
-  font-weight: bold;
+/* ===== NAME ===== */
+#lowerthird .name {
+  font-size: var(--lt-name-size);
+  font-weight: var(--lt-name-weight);
 }
 
 /* ===== TITLE ===== */
-.title {
-  font-size: 30px;    /* <-- adjust TITLE size here */
-  font-weight: 100;
+#lowerthird .title {
+  font-size: var(--lt-title-size);
+  font-weight: var(--lt-title-weight);
 }
-
-/* ===== DEBUG ===== */
-#debug {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(0,0,0,0.8);
-  color: #0f0;
-  padding: 10px;
-  font-family: monospace;
-  font-size: 14px;
-  z-index: 1000;
-}
-</style>
