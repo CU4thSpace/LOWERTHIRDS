@@ -22,6 +22,7 @@
 
   --lt-pad-y: 10px;
   --lt-pad-x: 16px;
+  --lt-radius: 6px;           /* corner radius of the boxes */
 
   --lt-fade: 0.35s;           /* animation duration */
   --lt-slide: 40px;           /* how far it slides up on entry */
@@ -58,6 +59,7 @@
   background-color: var(--lt-bg);
   color: var(--lt-text);
   padding: var(--lt-pad-y) var(--lt-pad-x);
+  border-radius: var(--lt-radius);
   box-sizing: border-box;
   line-height: 1;
 }
