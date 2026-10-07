@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://use.typekit.net/paf7uxj.css">
-/* ===== CHANGE STYLING of the LOWER THIRDS THEMSELVES AT THE CSS STYLESHEET ===== */
+<!-- ===== CHANGE STYLING of the LOWER THIRDS THEMSELVES AT THE CSS STYLESHEET ===== -->
 <link rel="stylesheet" href="https://cu4thspace.github.io/LOWERTHIRDS/LOWERTHIRDStyle.css">
 <title>4thSpace Lower Thirds – BrightSign</title>
 
@@ -36,14 +36,45 @@ html, body {
   padding: 10px;
   font-family: monospace;
   font-size: 14px;
+  white-space: pre-line;
   z-index: 1000;
+}
+
+/* ===== TITLE + EDIT NOTE ===== */
+#pageinfo {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  max-width: 900px;
+  text-align: right;
+  color: #000;
+  padding: 10px;
+  font-family: monospace;
+  font-size: 14px;
+  z-index: 1000;
+}
+#pageinfo .info-title {
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+#pageinfo a {
+  color: #000;
+  text-decoration: underline;
+  word-break: break-all;
 }
 </style>
 </head>
 
 <body>
 
-<div id="debug">READY — Press → to advance</div>
+<div id="debug">READY — Forward arrow (→) advances to the next Lower Thirds name.
+Back arrow (←) returns to the TODAY card.</div>
+
+<div id="pageinfo">
+  <div class="info-title">4thSpace LOWER THIRDS</div>
+  <div>Connect to this URL in order to edit Lower Thirds:</div>
+  <a href="https://docs.google.com/spreadsheets/d/16c9DD4OHy1SITcF7lJtH7e49ol6SxN9A_8kBAdCOzsQ/edit?gid=0#gid=0">https://docs.google.com/spreadsheets/d/16c9DD4OHy1SITcF7lJtH7e49ol6SxN9A_8kBAdCOzsQ/edit?gid=0#gid=0</a>
+</div>
 
 <div class="event-container">
   <div id="lowerthird">
@@ -65,10 +96,11 @@ let entries = [];
 let index   = -1;
 let hasShownFirstEntry = false;
 
-const lt      = document.getElementById("lowerthird");
-const nameEl  = document.getElementById("name");
-const titleEl = document.getElementById("title");
-const debugEl = document.getElementById("debug");
+const lt       = document.getElementById("lowerthird");
+const nameEl   = document.getElementById("name");
+const titleEl  = document.getElementById("title");
+const debugEl  = document.getElementById("debug");
+const infoEl   = document.getElementById("pageinfo");
 
 /* ===== DEBUG ===== */
 function debug(msg) {
@@ -195,6 +227,7 @@ function showEntry(i) {
 
   if (!hasShownFirstEntry) {
     debugEl.style.display = 'none';
+    infoEl.style.display  = 'none';
     hasShownFirstEntry = true;
   }
 }
