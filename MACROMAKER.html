@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SuperSource macro builder</title>
+<style>
+:root{--bg:#f4f4f1;--panel:#fff;--ink:#1d1d1b;--mut:#6a6a64;--line:#d9d9d2;--acc:#1f6feb;--cv:#161616;--c0:#e5484d;--c1:#3e9bff;--c2:#30a46c;--c3:#f5a524;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#161615;--panel:#212120;--ink:#ecece8;--mut:#9c9c94;--line:#38382f;--acc:#6aa6ff;--cv:#050505}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#161615;--panel:#212120;--ink:#ecece8;--mut:#9c9c94;--line:#38382f;--acc:#6aa6ff;--cv:#050505}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+h1{font-size:19px;margin:0 0 4px}
+.sub{color:var(--mut);margin:0 0 14px;max-width:62ch}
+.wrap{max-width:1300px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:900px){.wrap{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button,.btn,select,input{font:inherit;color:inherit}
+button,.btn{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
+button:hover,.btn:hover{border-color:var(--acc)}
+button:focus-visible,.btn:focus-within,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+select,input[type=text],input[type=number]{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 6px;min-width:0}
+#nm{flex:1 1 140px}
+svg{display:block;width:100%;height:auto;border-radius:6px;touch-action:none;background:var(--cv)}
+.vis{cursor:move}.hnd{cursor:nwse-resize}
+.card{border-left:5px solid var(--c)}
+.hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:600}
+.g{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px}
+.s4{grid-column:span 4}.s3{grid-column:span 3}
+.g label{display:flex;flex-direction:column;font-size:12px;color:var(--mut)}
+.g input{width:100%;box-sizing:border-box}
+textarea{width:100%;box-sizing:border-box;height:240px;margin-top:8px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px;color:var(--ink);resize:vertical}
+.note{color:var(--mut);font-size:12px;margin:8px 0 0}
+summary{cursor:pointer;font-weight:600}
+.cal{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:10px 0}
+.cal label{display:flex;flex-direction:column;font-size:12px;color:var(--mut)}
+#msg{color:var(--acc);min-height:1.4em;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <div>
+  <h1>SuperSource macro builder</h1>
+  <p class="sub">Place up to four boxes on a 1920 by 1080 canvas. The tool converts pixels into ATEM position, size and crop values and writes one macro per layout.</p>
+  <div class="panel row">
+   <select id="sel" aria-label="Layout"></select>
+   <input type="text" id="nm" placeholder="Layout name" aria-label="Layout name">
+   <button id="add">New</button><button id="dup">Duplicate</button><button id="del">Delete</button>
+  </div>
+  <div class="panel">
+   <svg id="cv" viewBox="0 0 1920 1080" role="img" aria-label="SuperSource canvas"></svg>
+   <p class="note">Drag a box to move it and drag its white handle to resize (16:9 is kept). The dashed outline is the uncropped frame and the solid area is what stays visible. Box 3 is drawn on top.</p>
+  </div>
+  <details class="panel">
+   <summary>Calibration</summary>
+   <div class="cal">
+    <label>Canvas pixels per position unit<input type="number" id="pxu" step="any" min="0.1"></label>
+    <label>Source pixels per crop unit<input type="number" id="cpu" step="any" min="0.1"></label>
+    <label><span><input type="checkbox" id="yup"> Positive Y moves up</span></label>
+   </div>
+   <div class="row"><button id="cal">Add calibration layout</button></div>
+   <p class="note">Import the calibration macro and run it. Camera1 should sit flush in the top-right corner of the output. Camera2 should show only the right half of its picture, along the bottom, ending at the vertical centre line. If not, adjust the position unit, flip Y, or change the crop unit until it matches.</p>
+  </details>
+ </div>
+ <div>
+  <p class="note" style="margin-top:0">X and Y are the top-left corner of the uncropped frame on the canvas. Crop values are in pixels of the 1920 by 1080 source.</p>
+  <div id="boxes"></div>
+  <div class="panel">
+   <div class="row">
+    <button class="pri" id="cp">Copy XML</button>
+    <button id="sx">Save XML as .txt</button>
+    <button id="sp">Save project</button>
+    <label class="btn">Load project<input type="file" id="ld" accept=".json,application/json" hidden></label>
+   </div>
+   <div class="row" style="margin-top:8px"><label><input type="checkbox" id="rst"> Also reset position, size and crop on unused boxes</label></div>
+   <textarea id="xml" readonly spellcheck="false" aria-label="Macro XML"></textarea>
+   <p class="note">Saved files use a .txt extension because this page cannot write .xml. Rename the file to .xml before importing it from the Macros panel. <span id="msg" role="status"></span></p>
+  </div>
+ </div>
+</div>
+<script>
+const $=s=>document.querySelector(s),clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const K={pxu:20,cpu:60,yup:true,reset:false};
+const nb=i=>({on:false,src:i+1,size:.5,x:0,y:270,cl:0,ct:0,cr:0,cb:0});
+const nl=n=>{const l={name:n,boxes:[0,1,2,3].map(nb)};Object.assign(l.boxes[0],{on:true});Object.assign(l.boxes[1],{on:true,x:960});return l};
+let P={layouts:[nl('Side by side')],cur:0},DL=null,drag=null;
+const cur=()=>P.layouts[P.cur];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+const f=(n,d=2)=>String(+n.toFixed(d));
+const msg=t=>{$('#msg').textContent=t;clearTimeout(msg.t);msg.t=setTimeout(()=>$('#msg').textContent='',3000)};
+
+function persist(){try{localStorage.setItem('ssmb',JSON.stringify({P,K}))}catch(e){}}
+function restore(){try{const d=JSON.parse(localStorage.getItem('ssmb'));if(d&&d.P&&d.P.layouts&&d.P.layouts.length){P=d.P;P.cur=clamp(P.cur|0,0,P.layouts.length-1);Object.assign(K,d.K)}}catch(e){}}
+
+/* ---- macro XML ---- */
+function ops(b,i){
+ const o=(id,a)=>`            <Op id="SuperSourceV2Box${id}" superSource="0" boxIndex="${i}" ${a}/>`;
+ if(!b.on){
+  const r=[o('Enable','enable="False"')];
+  if(K.reset)r.push(o('XPosition','xPosition="0"'),o('YPosition','yPosition="0"'),o('Size','size="1"'),o('MaskEnable','enable="False"'),o('MaskLeft','left="0"'),o('MaskTop','top="0"'),o('MaskRight','right="0"'),o('MaskBottom','bottom="0"'));
+  return r;
+ }
+ const w=1920*b.size,h=1080*b.size,cx=b.x+w/2,cy=b.y+h/2;
+ const xp=(cx-960)/K.pxu,yp=(K.yup?540-cy:cy-540)/K.pxu;
+ const c=[b.cl,b.ct,b.cr,b.cb].map((v,j)=>clamp(v,0,j%2?1080:1920)/K.cpu);
+ return [o('Enable','enable="True"'),o('Input',`input="Camera${b.src}"`),o('XPosition',`xPosition="${f(xp)}"`),o('YPosition',`yPosition="${f(yp)}"`),o('Size',`size="${f(b.size,3)}"`),o('MaskEnable',`enable="${c.some(v=>v>0)?'True':'False'}"`),o('MaskLeft',`left="${f(c[0])}"`),o('MaskTop',`top="${f(c[1])}"`),o('MaskRight',`right="${f(c[2])}"`),o('MaskBottom',`bottom="${f(c[3])}"`)];
+}
+function xml(){
+ const rows=P.layouts.map((l,n)=>{
+  const d=l.boxes.map((b,i)=>b.on?`Box ${i} = Camera${b.src}`:null).filter(Boolean).join(', ');
+  return `        <Macro index="${n}" name="${esc(l.name)}" description="${esc(d)}">\n${l.boxes.flatMap(ops).join('\n')}\n        </Macro>`;
+ }).join('\n');
+ return `<?xml version="1.0" encoding="UTF-8"?>\n<Profile majorVersion="2" minorVersion="1" product="ATEM Mini Extreme ISO G2">\n    <MacroPool>\n${rows}\n    </MacroPool>\n    <MacroControl loop="False"/>\n</Profile>\n`;
+}
+
+/* ---- canvas ---- */
+const svg=$('#cv');
+function canvas(){
+ let h=`<path d="M960 0V1080M0 540H1920" stroke="#888" stroke-opacity=".35" stroke-dasharray="8 8" stroke-width="2"/>`;
+ cur().boxes.forEach((b,i)=>{
+  if(!b.on)return;
+  const w=1920*b.size,hh=1080*b.size,s=b.size;
+  const vx=b.x+b.cl*s,vy=b.y+b.ct*s,vw=Math.max(0,w-(b.cl+b.cr)*s),vh=Math.max(0,hh-(b.ct+b.cb)*s);
+  h+=`<rect x="${b.x}" y="${b.y}" width="${w}" height="${hh}" fill="none" stroke-width="3" stroke-dasharray="10 8" style="stroke:var(--c${i});stroke-opacity:.6"/>
+<rect class="vis" data-i="${i}" x="${vx}" y="${vy}" width="${vw}" height="${vh}" stroke-width="4" style="fill:var(--c${i});fill-opacity:.45;stroke:var(--c${i})"/>
+<text x="${vx+14}" y="${vy+46}" font-size="40" pointer-events="none" style="fill:#fff;stroke:#000;stroke-width:5px;paint-order:stroke">Box ${i}: Camera${b.src}</text>
+<circle class="hnd" data-i="${i}" cx="${b.x+w}" cy="${b.y+hh}" r="20" stroke-width="5" style="fill:#fff;stroke:var(--c${i})"/>`;
+ });
+ svg.innerHTML=h;
+}
+const pt=e=>{const r=svg.getBoundingClientRect();return{x:(e.clientX-r.left)*1920/r.width,y:(e.clientY-r.top)*1080/r.height}};
+svg.addEventListener('pointerdown',e=>{
+ const i=e.target.dataset.i;if(i===undefined)return;
+ drag={i:+i,m:e.target.classList.contains('hnd')?'s':'m',p:pt(e),o:{...cur().boxes[i]}};
+ svg.setPointerCapture(e.pointerId);e.preventDefault();
+});
+svg.addEventListener('pointermove',e=>{
+ if(!drag)return;
+ const b=cur().boxes[drag.i],p=pt(e),dx=p.x-drag.p.x,dy=p.y-drag.p.y,o=drag.o;
+ if(drag.m==='m'){b.x=Math.round((o.x+dx)/10)*10;b.y=Math.round((o.y+dy)/10)*10}
+ else b.size=Math.round(clamp((o.size*1920+dx)/1920,.07,1)*1000)/1000;
+ sync(drag.i);draw();
+});
+['pointerup','pointercancel'].forEach(t=>svg.addEventListener(t,()=>drag=null));
+
+/* ---- form ---- */
+const fl=(i,k,t,c)=>`<label class="${c}">${t}<input type="number" step="any" data-b="${i}" data-f="${k}"></label>`;
+function build(){
+ $('#boxes').innerHTML=[0,1,2,3].map(i=>`<div class="panel card" style="--c:var(--c${i})"><div class="hd"><label><input type="checkbox" data-b="${i}" data-f="on"> Box ${i}</label><select data-b="${i}" data-f="src" aria-label="Box ${i} source">${[1,2,3,4,5,6,7,8].map(n=>`<option value="${n}">Camera${n}</option>`).join('')}</select></div><div class="g">${fl(i,'size','Size %','s4')}${fl(i,'x','X px','s4')}${fl(i,'y','Y px','s4')}${fl(i,'cl','Crop L','s3')}${fl(i,'ct','Crop T','s3')}${fl(i,'cr','Crop R','s3')}${fl(i,'cb','Crop B','s3')}</div></div>`).join('');
+}
+function sync(only){
+ const L=cur();
+ document.querySelectorAll('[data-b]').forEach(el=>{
+  const i=+el.dataset.b;if(only!==undefined&&i!==only)return;
+  const b=L.boxes[i],k=el.dataset.f;
+  if(k==='on')el.checked=b.on;else if(k==='src')el.value=b.src;else if(k==='size')el.value=Math.round(b.size*1000)/10;else el.value=Math.round(b[k]*10)/10;
+ });
+}
+$('#boxes').addEventListener('input',e=>{
+ const t=e.target,k=t.dataset.f;if(!k)return;
+ const b=cur().boxes[t.dataset.b];
+ if(k==='on')b.on=t.checked;
+ else if(k==='src')b.src=+t.value;
+ else{const v=parseFloat(t.value);if(isNaN(v))return;b[k]=k==='size'?clamp(v/100,.07,1):v}
+ draw();
+});
+
+/* ---- layouts ---- */
+function fillSel(){
+ $('#sel').innerHTML=P.layouts.map((l,i)=>`<option value="${i}">${i}: ${esc(l.name)}</option>`).join('');
+ $('#sel').value=P.cur;$('#nm').value=cur().name;
+}
+$('#sel').onchange=e=>{P.cur=+e.target.value;refresh()};
+$('#nm').oninput=e=>{cur().name=e.target.value;$('#sel').options[P.cur].textContent=P.cur+': '+cur().name;draw()};
+$('#add').onclick=()=>{P.layouts.push(nl('Layout '+(P.layouts.length+1)));P.cur=P.layouts.length-1;refresh()};
+$('#dup').onclick=()=>{const c=JSON.parse(JSON.stringify(cur()));c.name+=' copy';P.layouts.splice(P.cur+1,0,c);P.cur++;refresh()};
+$('#del').onclick=()=>{if(P.layouts.length<2)return msg('Keep at least one layout');P.layouts.splice(P.cur,1);P.cur=Math.min(P.cur,P.layouts.length-1);refresh()};
+$('#cal').onclick=()=>{const l=nl('CALIBRATION');Object.assign(l.boxes[0],{src:1,x:960,y:0});Object.assign(l.boxes[1],{src:2,x:0,y:540,cl:960});P.layouts.push(l);P.cur=P.layouts.length-1;refresh()};
+
+/* ---- settings ---- */
+['pxu','cpu'].forEach(k=>$('#'+k).oninput=e=>{const v=parseFloat(e.target.value);if(v>0){K[k]=v;draw()}});
+$('#yup').onchange=e=>{K.yup=e.target.checked;draw()};
+$('#rst').onchange=e=>{K.reset=e.target.checked;draw()};
+
+/* ---- export ---- */
+async function copy(){
+ const t=$('#xml');
+ try{await navigator.clipboard.writeText(t.value)}catch(e){t.select();document.execCommand('copy')}
+ msg('Copied to clipboard');
+}
+async function saveFile(name,data){
+ try{await DL.save({filename:name,data});msg('Saved')}catch(e){if(!e||e.code!=='declined')msg('Saving is not available here. Use Copy XML.')}
+}
+$('#cp').onclick=copy;
+$('#sx').onclick=()=>saveFile('supersource-macros.txt',xml());
+$('#sp').onclick=()=>saveFile('supersource-project.json',JSON.stringify({layouts:P.layouts},null,1));
+$('#ld').onchange=e=>{
+ const file=e.target.files[0];if(!file)return;
+ const r=new FileReader();
+ r.onload=()=>{try{
+  const d=JSON.parse(r.result);if(!Array.isArray(d.layouts)||!d.layouts.length)throw 0;
+  P={cur:0,layouts:d.layouts.map(l=>({name:String(l.name||'Layout'),boxes:[0,1,2,3].map(i=>Object.assign(nb(i),(l.boxes||[])[i]))}))};
+  refresh();msg('Project loaded');
+ }catch(x){msg('That file is not a project file')}};
+ r.readAsText(file);e.target.value='';
+};
+
+/* ---- run ---- */
+function draw(){persist();canvas();$('#xml').value=xml()}
+function refresh(){fillSel();sync();draw()}
+restore();build();
+$('#pxu').value=K.pxu;$('#cpu').value=K.cpu;$('#yup').checked=K.yup;$('#rst').checked=K.reset;
+refresh();
+(async()=>{try{DL=window.claude?await claude.use('downloads'):null}catch(e){DL=null}
+ $('#sx').hidden=$('#sp').hidden=!DL})();
+</script>
+</body>
+</html>
