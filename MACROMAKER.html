@@ -61,7 +61,7 @@ summary{cursor:pointer;font-weight:600}
     <label><span><input type="checkbox" id="yup"> Positive Y moves up</span></label>
    </div>
    <div class="row"><button id="cal">Add calibration layout</button></div>
-   <p class="note">Import the calibration macro and run it. Camera1 should sit flush in the top-right corner of the output. Camera2 should show only the right half of its picture, along the bottom, ending at the vertical centre line. If not, adjust the position unit, flip Y, or change the crop unit until it matches.</p>
+   <p class="note">Import the calibration macro and run it. Camera1 should sit flush in the top-right corner of the output. Camera2 should show only the right half of its picture, along the bottom, ending at the vertical centre line. If not, adjust the position unit, flip Y, or change the crop unit until it matches. The default of 60 pixels per unit assumes the ATEM screen spans ±16 by ±9 position units.</p>
   </details>
  </div>
  <div>
@@ -82,7 +82,7 @@ summary{cursor:pointer;font-weight:600}
 </div>
 <script>
 const $=s=>document.querySelector(s),clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
-const K={pxu:20,cpu:60,yup:true,reset:false};
+const K={pxu:60,cpu:60,yup:true,reset:false};
 const nb=i=>({on:false,src:i+1,size:.5,x:0,y:270,cl:0,ct:0,cr:0,cb:0});
 const nl=n=>{const l={name:n,boxes:[0,1,2,3].map(nb)};Object.assign(l.boxes[0],{on:true});Object.assign(l.boxes[1],{on:true,x:960});return l};
 let P={layouts:[nl('Side by side')],cur:0},DL=null,drag=null;
@@ -91,8 +91,8 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const f=(n,d=2)=>String(+n.toFixed(d));
 const msg=t=>{$('#msg').textContent=t;clearTimeout(msg.t);msg.t=setTimeout(()=>$('#msg').textContent='',3000)};
 
-function persist(){try{localStorage.setItem('ssmb',JSON.stringify({P,K}))}catch(e){}}
-function restore(){try{const d=JSON.parse(localStorage.getItem('ssmb'));if(d&&d.P&&d.P.layouts&&d.P.layouts.length){P=d.P;P.cur=clamp(P.cur|0,0,P.layouts.length-1);Object.assign(K,d.K)}}catch(e){}}
+function persist(){try{localStorage.setItem('ssmb',JSON.stringify({v:2,P,K}))}catch(e){}}
+function restore(){try{const d=JSON.parse(localStorage.getItem('ssmb'));if(d&&d.P&&d.P.layouts&&d.P.layouts.length){P=d.P;P.cur=clamp(P.cur|0,0,P.layouts.length-1);if(d.v===2)Object.assign(K,d.K)}}catch(e){}}
 
 /* ---- macro XML ---- */
 function ops(b,i){
