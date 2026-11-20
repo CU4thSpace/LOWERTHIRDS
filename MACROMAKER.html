@@ -24,7 +24,7 @@ button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
 select,input[type=text],input[type=number]{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 6px;min-width:0}
 #nm{flex:1 1 140px}
 svg{display:block;width:100%;height:auto;border-radius:6px;touch-action:none;background:var(--cv)}
-.vis{cursor:move}.hnd{cursor:nwse-resize}
+.vis{cursor:move}.hnd{cursor:nwse-resize}.crp[data-k=tl]{cursor:nwse-resize}.crp[data-k=tr]{cursor:nesw-resize}
 .card{border-left:5px solid var(--c)}
 .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:600}
 .g{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px}
@@ -51,7 +51,7 @@ summary{cursor:pointer;font-weight:600}
   </div>
   <div class="panel">
    <svg id="cv" viewBox="0 0 1920 1080" role="img" aria-label="SuperSource canvas"></svg>
-   <p class="note">Drag a box to move it and drag its white handle to resize (16:9 is kept). The dashed outline is the uncropped frame and the solid area is what stays visible. Box 3 is drawn on top.</p>
+   <p class="note">Drag a box to move it. The white circle resizes it and keeps 16:9. The two square handles on the top corners crop it: the top-left one crops from the left and top, the top-right one from the right and top. Bottom crop is set in the fields. The dashed outline is the uncropped frame and the solid area is what stays visible. Box 3 is drawn on top.</p>
   </div>
   <details class="panel">
    <summary>Calibration</summary>
@@ -126,21 +126,30 @@ function canvas(){
   h+=`<rect x="${b.x}" y="${b.y}" width="${w}" height="${hh}" fill="none" stroke-width="3" stroke-dasharray="10 8" style="stroke:var(--c${i});stroke-opacity:.6"/>
 <rect class="vis" data-i="${i}" x="${vx}" y="${vy}" width="${vw}" height="${vh}" stroke-width="4" style="fill:var(--c${i});fill-opacity:.45;stroke:var(--c${i})"/>
 <text x="${vx+14}" y="${vy+46}" font-size="40" pointer-events="none" style="fill:#fff;stroke:#000;stroke-width:5px;paint-order:stroke">Box ${i}: Camera${b.src}</text>
-<circle class="hnd" data-i="${i}" cx="${b.x+w}" cy="${b.y+hh}" r="20" stroke-width="5" style="fill:#fff;stroke:var(--c${i})"/>`;
+<circle class="hnd" data-i="${i}" cx="${b.x+w}" cy="${b.y+hh}" r="20" stroke-width="5" style="fill:#fff;stroke:var(--c${i})"/>
+<rect class="crp" data-i="${i}" data-k="tl" x="${vx-18}" y="${vy-18}" width="36" height="36" rx="6" stroke-width="5" style="fill:#fff;stroke:var(--c${i})"/>
+<rect class="crp" data-i="${i}" data-k="tr" x="${vx+vw-18}" y="${vy-18}" width="36" height="36" rx="6" stroke-width="5" style="fill:#fff;stroke:var(--c${i})"/>`;
  });
  svg.innerHTML=h;
 }
 const pt=e=>{const r=svg.getBoundingClientRect();return{x:(e.clientX-r.left)*1920/r.width,y:(e.clientY-r.top)*1080/r.height}};
 svg.addEventListener('pointerdown',e=>{
  const i=e.target.dataset.i;if(i===undefined)return;
- drag={i:+i,m:e.target.classList.contains('hnd')?'s':'m',p:pt(e),o:{...cur().boxes[i]}};
+ const c=e.target.classList;
+ drag={i:+i,m:c.contains('hnd')?'s':c.contains('crp')?e.target.dataset.k:'m',p:pt(e),o:{...cur().boxes[i]}};
  svg.setPointerCapture(e.pointerId);e.preventDefault();
 });
 svg.addEventListener('pointermove',e=>{
  if(!drag)return;
  const b=cur().boxes[drag.i],p=pt(e),dx=p.x-drag.p.x,dy=p.y-drag.p.y,o=drag.o;
- if(drag.m==='m'){b.x=Math.round((o.x+dx)/10)*10;b.y=Math.round((o.y+dy)/10)*10}
- else b.size=Math.round(clamp((o.size*1920+dx)/1920,.07,1)*1000)/1000;
+ const q=v=>Math.round(v/10)*10,s=o.size,m=(v,hi)=>clamp(v,0,Math.max(0,hi));
+ if(drag.m==='m'){b.x=q(o.x+dx);b.y=q(o.y+dy)}
+ else if(drag.m==='s')b.size=Math.round(clamp((o.size*1920+dx)/1920,.07,1)*1000)/1000;
+ else{
+  b.ct=m(q(o.ct+dy/s),1080-b.cb-20);
+  if(drag.m==='tl')b.cl=m(q(o.cl+dx/s),1920-b.cr-20);
+  else b.cr=m(q(o.cr-dx/s),1920-b.cl-20);
+ }
  sync(drag.i);draw();
 });
 ['pointerup','pointercancel'].forEach(t=>svg.addEventListener(t,()=>drag=null));
