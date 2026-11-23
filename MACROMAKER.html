@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MACROMAKER v3</title>
+<title>MACROMAKER v7</title>
 <style>
 :root{--bg:#f4f4f1;--panel:#fff;--ink:#1d1d1b;--mut:#6a6a64;--line:#d9d9d2;--acc:#1f6feb;--cv:#161616;--c0:#e5484d;--c1:#3e9bff;--c2:#30a46c;--c3:#f5a524;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#161615;--panel:#212120;--ink:#ecece8;--mut:#9c9c94;--line:#38382f;--acc:#6aa6ff;--cv:#050505}}
@@ -42,7 +42,7 @@ summary{cursor:pointer;font-weight:600}
 <body>
 <div class="wrap">
  <div>
-  <h1>MACROMAKER v3</h1>
+  <h1>MACROMAKER v7</h1>
   <p class="sub">Place up to four boxes on a 1920 by 1080 canvas. The tool converts pixels into ATEM position, size and crop values and writes one macro per layout.</p>
   <div class="panel row">
    <select id="sel" aria-label="Layout"></select>
@@ -70,13 +70,13 @@ summary{cursor:pointer;font-weight:600}
   <div class="panel">
    <div class="row">
     <button class="pri" id="cp">Copy XML</button>
-    <button id="sx">Download XML</button>
+    <button id="sx">Download XML as .txt</button>
     <button id="sp">Save project</button>
     <label class="btn">Load project<input type="file" id="ld" accept=".json,application/json" hidden></label>
    </div>
    <div class="row" style="margin-top:8px"><label><input type="checkbox" id="rst"> Also reset position, size and crop on unused boxes</label></div>
    <textarea id="xml" readonly spellcheck="false" aria-label="Macro XML"></textarea>
-   <p class="note">The download is a zip holding the .xml file, because this page cannot save .xml directly. Unzip it, then import the .xml from the Macros panel. <span id="msg" role="status"></span></p>
+   <p class="note">The download is a .txt file, because this page cannot save .xml directly. Rename it to .xml before importing it from the Macros panel. <span id="msg" role="status"></span></p>
   </div>
  </div>
 </div>
@@ -123,12 +123,15 @@ function canvas(){
   if(!b.on)return;
   const w=1920*b.size,hh=1080*b.size,s=b.size;
   const vx=b.x+b.cl*s,vy=b.y+b.ct*s,vw=Math.max(0,w-(b.cl+b.cr)*s),vh=Math.max(0,hh-(b.ct+b.cb)*s);
+  const gd=[1,2].map(k=>{const gx=b.x+w*k/3,gy=b.y+hh*k/3;return(gx>vx&&gx<vx+vw?`M${gx} ${vy}V${vy+vh}`:'')+(gy>vy&&gy<vy+vh?`M${vx} ${gy}H${vx+vw}`:'')}).join('');
   h+=`<rect x="${b.x}" y="${b.y}" width="${w}" height="${hh}" fill="none" stroke-width="3" stroke-dasharray="10 8" style="stroke:var(--c${i});stroke-opacity:.6"/>
 <rect class="vis" data-i="${i}" x="${vx}" y="${vy}" width="${vw}" height="${vh}" stroke-width="4" style="fill:var(--c${i});fill-opacity:.45;stroke:var(--c${i})"/>
+<path d="${gd}" fill="none" stroke-width="3" pointer-events="none" style="stroke:#fff;stroke-opacity:.3"/>
 <text x="${vx+14}" y="${vy+46}" font-size="40" pointer-events="none" style="fill:#fff;stroke:#000;stroke-width:5px;paint-order:stroke">Box ${i}: Camera${b.src}</text>
 <circle class="hnd" data-i="${i}" cx="${b.x+w}" cy="${b.y+hh}" r="20" stroke-width="5" style="fill:#fff;stroke:var(--c${i})"/>
 <rect class="crp" data-i="${i}" data-k="tl" x="${vx-18}" y="${vy-18}" width="36" height="36" rx="6" stroke-width="5" style="fill:#fff;stroke:var(--c${i})"/>
-<rect class="crp" data-i="${i}" data-k="tr" x="${vx+vw-18}" y="${vy-18}" width="36" height="36" rx="6" stroke-width="5" style="fill:#fff;stroke:var(--c${i})"/>`;
+<rect class="crp" data-i="${i}" data-k="tr" x="${vx+vw-18}" y="${vy-18}" width="36" height="36" rx="6" stroke-width="5" style="fill:#fff;stroke:var(--c${i})"/>
+<path d="M${b.x+w/2-8} ${b.y+hh/2-8}l16 16m0-16l-16 16" fill="none" stroke-width="3" pointer-events="none" style="stroke:#fff;stroke-opacity:.3"/>`;
  });
  svg.innerHTML=h;
 }
@@ -216,7 +219,7 @@ async function saveFile(name,data){
  try{await DL.save({filename:name,data});msg('Saved')}catch(e){if(!e||e.code!=='declined')msg('Saving is not available here. Use Copy XML.')}
 }
 $('#cp').onclick=copy;
-$('#sx').onclick=()=>saveFile('supersource-macros.zip',zip('supersource-macros.xml',xml()));
+$('#sx').onclick=()=>saveFile('supersource-macros.txt',xml());
 $('#sp').onclick=()=>saveFile('supersource-project.json',JSON.stringify({layouts:P.layouts},null,1));
 $('#ld').onchange=e=>{
  const file=e.target.files[0];if(!file)return;
