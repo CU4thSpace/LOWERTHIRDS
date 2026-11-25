@@ -70,13 +70,13 @@ summary{cursor:pointer;font-weight:600}
   <div class="panel">
    <div class="row">
     <button class="pri" id="cp">Copy XML</button>
-    <button id="sx">Download XML as .txt</button>
+    <button id="sx">Download XML</button>
     <button id="sp">Save project</button>
     <label class="btn">Load project<input type="file" id="ld" accept=".json,application/json" hidden></label>
    </div>
    <div class="row" style="margin-top:8px"><label><input type="checkbox" id="rst"> Also reset position, size and crop on unused boxes</label></div>
    <textarea id="xml" readonly spellcheck="false" aria-label="Macro XML"></textarea>
-   <p class="note">The download is a .txt file, because this page cannot save .xml directly. Rename it to .xml before importing it from the Macros panel. <span id="msg" role="status"></span></p>
+   <p class="note">Download the macro directly as an .xml file and import it from the ATEM Macros panel. <span id="msg" role="status"></span></p>
   </div>
  </div>
 </div>
@@ -215,11 +215,24 @@ async function copy(){
  try{await navigator.clipboard.writeText(t.value)}catch(e){t.select();document.execCommand('copy')}
  msg('Copied to clipboard');
 }
-async function saveFile(name,data){
- try{await DL.save({filename:name,data});msg('Saved')}catch(e){if(!e||e.code!=='declined')msg('Saving is not available here. Use Copy XML.')}
+function saveFile(name,data){
+  const type=name.toLowerCase().endsWith('.json')
+    ? 'application/json;charset=utf-8'
+    : 'application/xml;charset=utf-8';
+  const blob=new Blob([data],{type});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=name;
+  a.style.display='none';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  msg('Download started');
 }
 $('#cp').onclick=copy;
-$('#sx').onclick=()=>saveFile('supersource-macros.txt',xml());
+$('#sx').onclick=()=>saveFile('supersource-macros.xml',xml());
 $('#sp').onclick=()=>saveFile('supersource-project.json',JSON.stringify({layouts:P.layouts},null,1));
 $('#ld').onchange=e=>{
  const file=e.target.files[0];if(!file)return;
@@ -238,8 +251,7 @@ function refresh(){fillSel();sync();draw()}
 restore();build();
 $('#pxu').value=K.pxu;$('#cpu').value=K.cpu;$('#yup').checked=K.yup;$('#rst').checked=K.reset;
 refresh();
-(async()=>{try{DL=window.claude?await claude.use('downloads'):null}catch(e){DL=null}
- $('#sx').hidden=$('#sp').hidden=!DL})();
+
 </script>
 </body>
 </html>
