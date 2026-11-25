@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MACROMAKER v7</title>
+<title>MACROMAKER v9</title>
 <style>
 :root{--bg:#f4f4f1;--panel:#fff;--ink:#1d1d1b;--mut:#6a6a64;--line:#d9d9d2;--acc:#1f6feb;--cv:#161616;--c0:#e5484d;--c1:#3e9bff;--c2:#30a46c;--c3:#f5a524;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#161615;--panel:#212120;--ink:#ecece8;--mut:#9c9c94;--line:#38382f;--acc:#6aa6ff;--cv:#050505}}
@@ -42,7 +42,7 @@ summary{cursor:pointer;font-weight:600}
 <body>
 <div class="wrap">
  <div>
-  <h1>MACROMAKER v7</h1>
+  <h1>MACROMAKER v9</h1>
   <p class="sub">Place up to four boxes on a 1920 by 1080 canvas. The tool converts pixels into ATEM position, size and crop values and writes one macro per layout.</p>
   <div class="panel row">
    <select id="sel" aria-label="Layout"></select>
@@ -76,7 +76,7 @@ summary{cursor:pointer;font-weight:600}
    </div>
    <div class="row" style="margin-top:8px"><label><input type="checkbox" id="rst"> Also reset position, size and crop on unused boxes</label></div>
    <textarea id="xml" readonly spellcheck="false" aria-label="Macro XML"></textarea>
-   <p class="note">Download the macro directly as an .xml file and import it from the ATEM Macros panel. <span id="msg" role="status"></span></p>
+   <p class="note"><span id="xn">The download is saved as an .xml file, ready to import from the Macros panel.</span> <span id="msg" role="status"></span></p>
   </div>
  </div>
 </div>
@@ -85,7 +85,7 @@ const $=s=>document.querySelector(s),clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const K={pxu:60,cpu:60,yup:true,reset:false};
 const nb=i=>({on:false,src:i+1,size:.5,x:0,y:270,cl:0,ct:0,cr:0,cb:0});
 const nl=n=>{const l={name:n,boxes:[0,1,2,3].map(nb)};Object.assign(l.boxes[0],{on:true});Object.assign(l.boxes[1],{on:true,x:960});return l};
-let P={layouts:[nl('Side by side')],cur:0},DL=null,drag=null;
+let P={layouts:[nl('Side by side')],cur:0},drag=null;
 const cur=()=>P.layouts[P.cur];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 const f=(n,d=2)=>String(+n.toFixed(d));
@@ -197,43 +197,20 @@ $('#yup').onchange=e=>{K.yup=e.target.checked;draw()};
 $('#rst').onchange=e=>{K.reset=e.target.checked;draw()};
 
 /* ---- export ---- */
-const CT=Array.from({length:256},(_,n)=>{let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;return c>>>0});
-const crc32=u=>{let r=-1;for(const b of u)r=CT[(r^b)&255]^(r>>>8);return(r^-1)>>>0};
-function zip(name,text){
- const e=new TextEncoder(),n=e.encode(name),d=e.encode(text),crc=crc32(d),L=30+n.length,c=L+d.length,z=c+46+n.length;
- const a=new Uint8Array(z+22),v=new DataView(a.buffer);
- const w=(o,s,x)=>s===2?v.setUint16(o,x,true):v.setUint32(o,x,true);
- w(0,4,0x04034b50);w(4,2,20);w(6,2,0x0800);w(8,2,0);w(10,2,0);w(12,2,0x21);w(14,4,crc);w(18,4,d.length);w(22,4,d.length);w(26,2,n.length);w(28,2,0);
- a.set(n,30);a.set(d,L);
- w(c,4,0x02014b50);w(c+4,2,20);w(c+6,2,20);w(c+8,2,0x0800);w(c+10,2,0);w(c+12,2,0);w(c+14,2,0x21);w(c+16,4,crc);w(c+20,4,d.length);w(c+24,4,d.length);w(c+28,2,n.length);w(c+30,2,0);w(c+32,2,0);w(c+34,2,0);w(c+36,2,0);w(c+38,4,0);w(c+42,4,0);
- a.set(n,c+46);
- w(z,4,0x06054b50);w(z+4,2,0);w(z+6,2,0);w(z+8,2,1);w(z+10,2,1);w(z+12,4,46+n.length);w(z+16,4,c);w(z+20,2,0);
- return a;
-}
 async function copy(){
  const t=$('#xml');
  try{await navigator.clipboard.writeText(t.value)}catch(e){t.select();document.execCommand('copy')}
  msg('Copied to clipboard');
 }
-function saveFile(name,data){
-  const type=name.toLowerCase().endsWith('.json')
-    ? 'application/json;charset=utf-8'
-    : 'application/xml;charset=utf-8';
-  const blob=new Blob([data],{type});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download=name;
-  a.style.display='none';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
-  msg('Download started');
+function saveFile(name,data,type){
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(a.href),1000);msg('Saved '+name);
 }
 $('#cp').onclick=copy;
-$('#sx').onclick=()=>saveFile('supersource-macros.xml',xml());
-$('#sp').onclick=()=>saveFile('supersource-project.json',JSON.stringify({layouts:P.layouts},null,1));
+$('#sx').onclick=()=>saveFile('supersource-macros.xml',xml(),'application/xml');
+$('#sp').onclick=()=>saveFile('supersource-project.json',JSON.stringify({layouts:P.layouts},null,1),'application/json');
 $('#ld').onchange=e=>{
  const file=e.target.files[0];if(!file)return;
  const r=new FileReader();
@@ -251,7 +228,6 @@ function refresh(){fillSel();sync();draw()}
 restore();build();
 $('#pxu').value=K.pxu;$('#cpu').value=K.cpu;$('#yup').checked=K.yup;$('#rst').checked=K.reset;
 refresh();
-
 </script>
 </body>
 </html>
