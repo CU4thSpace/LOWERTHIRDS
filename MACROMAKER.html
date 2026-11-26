@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MACROMAKER v9</title>
+<title>MACROMAKER v10</title>
 <style>
 :root{--bg:#f4f4f1;--panel:#fff;--ink:#1d1d1b;--mut:#6a6a64;--line:#d9d9d2;--acc:#1f6feb;--cv:#161616;--c0:#e5484d;--c1:#3e9bff;--c2:#30a46c;--c3:#f5a524;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#161615;--panel:#212120;--ink:#ecece8;--mut:#9c9c94;--line:#38382f;--acc:#6aa6ff;--cv:#050505}}
@@ -42,7 +42,7 @@ summary{cursor:pointer;font-weight:600}
 <body>
 <div class="wrap">
  <div>
-  <h1>MACROMAKER v9</h1>
+  <h1>MACROMAKER v10</h1>
   <p class="sub">Place up to four boxes on a 1920 by 1080 canvas. The tool converts pixels into ATEM position, size and crop values and writes one macro per layout.</p>
   <div class="panel row">
    <select id="sel" aria-label="Layout"></select>
@@ -51,7 +51,7 @@ summary{cursor:pointer;font-weight:600}
   </div>
   <div class="panel">
    <svg id="cv" viewBox="0 0 1920 1080" role="img" aria-label="SuperSource canvas"></svg>
-   <p class="note">Drag a box to move it. The white circle resizes it and keeps 16:9. The two square handles on the top corners crop it: the top-left one crops from the left and top, the top-right one from the right and top. Bottom crop is set in the fields. The dashed outline is the uncropped frame and the solid area is what stays visible. Box 3 is drawn on top.</p>
+   <p class="note">Drag a box to move it. The white circle resizes it and keeps 16:9. The two square handles on the top corners crop it: the top-left one crops from the left and top, the top-right one from the right and top. Bottom crop is set in the fields. The dashed outline is the uncropped frame and the solid area is what stays visible. Box 0 is in front and Box 3 is at the back.</p>
   </div>
   <details class="panel">
    <summary>Calibration</summary>
@@ -119,7 +119,7 @@ function xml(){
 const svg=$('#cv');
 function canvas(){
  let h=`<path d="M960 0V1080M0 540H1920" stroke="#888" stroke-opacity=".35" stroke-dasharray="8 8" stroke-width="2"/>`;
- cur().boxes.forEach((b,i)=>{
+ cur().boxes.map((b,i)=>[b,i]).reverse().forEach(([b,i])=>{
   if(!b.on)return;
   const w=1920*b.size,hh=1080*b.size,s=b.size;
   const vx=b.x+b.cl*s,vy=b.y+b.ct*s,vw=Math.max(0,w-(b.cl+b.cr)*s),vh=Math.max(0,hh-(b.ct+b.cb)*s);
