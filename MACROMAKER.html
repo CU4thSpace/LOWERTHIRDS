@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MACROMAKER v11</title>
+<title>MACROMAKER v12</title>
 <style>
 :root{--bg:#f4f4f1;--panel:#fff;--ink:#1d1d1b;--mut:#6a6a64;--line:#d9d9d2;--acc:#1f6feb;--cv:#161616;--c0:#e5484d;--c1:#3e9bff;--c2:#30a46c;--c3:#f5a524;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#161615;--panel:#212120;--ink:#ecece8;--mut:#9c9c94;--line:#38382f;--acc:#6aa6ff;--cv:#050505}}
@@ -42,7 +42,7 @@ summary{cursor:pointer;font-weight:600}
 <body>
 <div class="wrap">
  <div>
-  <h1>MACROMAKER v11</h1>
+  <h1>MACROMAKER v12</h1>
   <p class="sub">Place up to four boxes on a 1920 by 1080 canvas. The tool converts pixels into ATEM position, size and crop values and writes one macro per layout.</p>
   <div class="panel row">
    <select id="sel" aria-label="Layout"></select>
@@ -212,7 +212,8 @@ function saveFile(name,data,type){
  setTimeout(()=>URL.revokeObjectURL(a.href),1000);msg('Saved '+name);
 }
 $('#cp').onclick=copy;
-$('#sx').onclick=()=>saveFile('supersource-macros.xml',xml(),'application/xml');
+const ymd=()=>{const t=new Date();return String(t.getFullYear()).slice(2)+String(t.getMonth()+1).padStart(2,'0')+String(t.getDate()).padStart(2,'0')};
+$('#sx').onclick=()=>saveFile('SUPERSOURCE_'+ymd()+'.xml',xml(),'application/xml');
 $('#sp').onclick=()=>saveFile('supersource-project.json',JSON.stringify({layouts:P.layouts},null,1),'application/json');
 $('#ld').onchange=e=>{
  const file=e.target.files[0];if(!file)return;
@@ -234,4 +235,3 @@ refresh();
 </script>
 </body>
 </html>
-
