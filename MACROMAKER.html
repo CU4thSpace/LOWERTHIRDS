@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MACROMAKER v10</title>
+<title>MACROMAKER v11</title>
 <style>
 :root{--bg:#f4f4f1;--panel:#fff;--ink:#1d1d1b;--mut:#6a6a64;--line:#d9d9d2;--acc:#1f6feb;--cv:#161616;--c0:#e5484d;--c1:#3e9bff;--c2:#30a46c;--c3:#f5a524;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#161615;--panel:#212120;--ink:#ecece8;--mut:#9c9c94;--line:#38382f;--acc:#6aa6ff;--cv:#050505}}
@@ -42,12 +42,13 @@ summary{cursor:pointer;font-weight:600}
 <body>
 <div class="wrap">
  <div>
-  <h1>MACROMAKER v10</h1>
+  <h1>MACROMAKER v11</h1>
   <p class="sub">Place up to four boxes on a 1920 by 1080 canvas. The tool converts pixels into ATEM position, size and crop values and writes one macro per layout.</p>
   <div class="panel row">
    <select id="sel" aria-label="Layout"></select>
    <input type="text" id="nm" placeholder="Layout name" aria-label="Layout name">
    <button id="add">New</button><button id="dup">Duplicate</button><button id="del">Delete</button>
+   <input type="text" id="nt" style="flex:1 1 280px" placeholder="Notes shown in the Macros panel (empty uses the box list)" aria-label="Macro notes"><button id="nf">Fill from boxes</button>
   </div>
   <div class="panel">
    <svg id="cv" viewBox="0 0 1920 1080" role="img" aria-label="SuperSource canvas"></svg>
@@ -84,7 +85,7 @@ summary{cursor:pointer;font-weight:600}
 const $=s=>document.querySelector(s),clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const K={pxu:60,cpu:60,yup:true,reset:false};
 const nb=i=>({on:false,src:i+1,size:.5,x:0,y:270,cl:0,ct:0,cr:0,cb:0});
-const nl=n=>{const l={name:n,boxes:[0,1,2,3].map(nb)};Object.assign(l.boxes[0],{on:true});Object.assign(l.boxes[1],{on:true,x:960});return l};
+const nl=n=>{const l={name:n,note:'',boxes:[0,1,2,3].map(nb)};Object.assign(l.boxes[0],{on:true});Object.assign(l.boxes[1],{on:true,x:960});return l};
 let P={layouts:[nl('Side by side')],cur:0},drag=null;
 const cur=()=>P.layouts[P.cur];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
@@ -110,7 +111,7 @@ function ops(b,i){
 function xml(){
  const rows=P.layouts.map((l,n)=>{
   const d=l.boxes.map((b,i)=>b.on?`Box ${i} = Camera${b.src}`:null).filter(Boolean).join(', ');
-  return `        <Macro index="${n}" name="${esc(l.name)}" description="${esc(d)}">\n${l.boxes.flatMap(ops).join('\n')}\n        </Macro>`;
+  return `        <Macro index="${n}" name="${esc(l.name)}" description="${esc(l.note||d)}">\n${l.boxes.flatMap(ops).join('\n')}\n        </Macro>`;
  }).join('\n');
  return `<?xml version="1.0" encoding="UTF-8"?>\n<Profile majorVersion="2" minorVersion="1" product="ATEM Mini Extreme ISO G2">\n    <MacroPool>\n${rows}\n    </MacroPool>\n    <MacroControl loop="False"/>\n</Profile>\n`;
 }
@@ -182,10 +183,12 @@ $('#boxes').addEventListener('input',e=>{
 /* ---- layouts ---- */
 function fillSel(){
  $('#sel').innerHTML=P.layouts.map((l,i)=>`<option value="${i}">${i}: ${esc(l.name)}</option>`).join('');
- $('#sel').value=P.cur;$('#nm').value=cur().name;
+ $('#sel').value=P.cur;$('#nm').value=cur().name;$('#nt').value=cur().note||'';
 }
 $('#sel').onchange=e=>{P.cur=+e.target.value;refresh()};
 $('#nm').oninput=e=>{cur().name=e.target.value;$('#sel').options[P.cur].textContent=P.cur+': '+cur().name;draw()};
+$('#nt').oninput=e=>{cur().note=e.target.value;draw()};
+$('#nf').onclick=()=>{const L=cur();L.note=L.boxes.map((b,i)=>b.on?`Box ${i} = Camera${b.src}`:null).filter(Boolean).join(', ');$('#nt').value=L.note;draw()};
 $('#add').onclick=()=>{P.layouts.push(nl('Layout '+(P.layouts.length+1)));P.cur=P.layouts.length-1;refresh()};
 $('#dup').onclick=()=>{const c=JSON.parse(JSON.stringify(cur()));c.name+=' copy';P.layouts.splice(P.cur+1,0,c);P.cur++;refresh()};
 $('#del').onclick=()=>{if(P.layouts.length<2)return msg('Keep at least one layout');P.layouts.splice(P.cur,1);P.cur=Math.min(P.cur,P.layouts.length-1);refresh()};
@@ -216,7 +219,7 @@ $('#ld').onchange=e=>{
  const r=new FileReader();
  r.onload=()=>{try{
   const d=JSON.parse(r.result);if(!Array.isArray(d.layouts)||!d.layouts.length)throw 0;
-  P={cur:0,layouts:d.layouts.map(l=>({name:String(l.name||'Layout'),boxes:[0,1,2,3].map(i=>Object.assign(nb(i),(l.boxes||[])[i]))}))};
+  P={cur:0,layouts:d.layouts.map(l=>({name:String(l.name||'Layout'),note:String(l.note||''),boxes:[0,1,2,3].map(i=>Object.assign(nb(i),(l.boxes||[])[i]))}))};
   refresh();msg('Project loaded');
  }catch(x){msg('That file is not a project file')}};
  r.readAsText(file);e.target.value='';
@@ -231,3 +234,4 @@ refresh();
 </script>
 </body>
 </html>
+
